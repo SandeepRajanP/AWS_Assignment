@@ -1,0 +1,22 @@
+import boto3
+import json
+
+#If needed we can set other parameters like Logtype
+def asynchronous_lambda_invoke(event):
+    client = boto3.client('lambda')
+    response = client.invoke(
+        FunctionName=alwaysErrorFunctionSandeep,
+        InvocationType='Event',
+        Payload=json.dumps(event)
+    )
+    print response
+    print response['Payload'].read()
+    return {"result": "OK"}
+
+request = {
+}
+
+def asynchronous_lambda_invoke(request)
+
+
+We observed the way in which a request should be sent and the way in which a response comes is sent to us by the invoke function. ALso we observed that the errors are getting stored in the cloudwatch logs. Using this we can get the request and send it in a queue to make sure that the request is delivered if there is an timeout error or some other uncontrollable error. We can make sure that all the requests get a response by doing this
