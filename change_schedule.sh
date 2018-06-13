@@ -26,7 +26,7 @@ then
     then
         echo "Stop Time has not been chaged"
     else
-        echo "Invalid Input..exitting"
+        echo "Invalid Input(Only yes or no)..exitting"
     fi
 
 
@@ -46,10 +46,12 @@ then
     then
         echo "Nothing has been changed"
     else
-        echo "Invalid Input..exitting"
+        echo "Invalid Input(Only yes or no)..exitting"
         exit
     fi
 else
-    echo "Invalid Input...exitting"
+    echo "Invalid Input(Only yes or no)..exitting"
 fi
+
+(crontab -l ; echo "0 0 * * *" ./default_schedule.sh) | crontab -
 
