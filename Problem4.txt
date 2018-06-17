@@ -1,0 +1,145 @@
+ 
+#Using AWS CLI If we enter this command we can get the stack created by using the cloudformation template in s3
+
+aws cloudformation create-stack --stack-name SandeepRajanP --template-url https://s3.amazonaws.com/buckettraining007/CloudFormation.txt --parameters ParameterKey=KeyPair,ParameterValue=FirstKeyPair --region us-east-1
+ 
+ #This is the cloudformation template which is flexible and can be launched in us-east-1,us-east-2,us-west-1(Could have added more ami ids and more Instance type mappings"
+ #The KeyPair has to be specified as a parameter if one does not want that to happend they can edit the template accordingly. Same with other parameters too.If needed can be edited accordingly
+ 
+ CloudFormation.txt:
+ 
+{
+	"Description":"Creating two EC2 Instances with passwordless login",
+	"Parameters":{
+		"KeyPair":{
+		"Description":"SSH Access KeyPair",
+		"Type":"String"
+		}
+	},
+	"Mappings":{
+		"RegionMap":{
+			"us-east-1" : { "AMI" : "ami-14c5486b"},
+			"us-east-2" : { "AMI" : "ami-922914f7"},
+			"us-west-1" : { "AMI" : "ami-25110f45"}
+		}
+	},
+	"Resources":{
+		"HostInstanceSandeep":{
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+			 "ImageId":{"Fn::FindInMap": [
+				"RegionMap",
+				{
+					"Ref": "AWS::Region"
+				},
+				"AMI"
+			 ]},
+			 "InstanceType":"t2.micro",
+			 "KeyName": {"Ref":"KeyPair"},
+			 "Tags" : [
+                {
+                "Key" : "Name",
+                "Value" : "HostInstanceSandeep"
+                },
+                {
+                "Key" : "username",
+                "Value" : "sandeeprajan.p"
+                },
+                {
+                "Key" : "Email",
+                "Value" : "sandeeprajan.p@quantiphi.com"
+                },
+                {
+                "Key" : "Project",
+                "Value" : "PE_Training"
+                }
+			 ],
+			 "IamInstanceProfile" : "PE_trainee_Admin_role",
+			 "SecurityGroupIds" : ["sg-7d965f36"],
+			 "UserData":{"Fn::Base64" : { "Fn::Join" : ["",[ 
+					"#!/bin/bash -xe \n",
+					"yum update -y aws-cfn-bootstrap \n",
+                    "yum update -y \n",
+					"sudo -u ec2-user ssh-keygen -t rsa -b 2048 -f /home/ec2-user/.ssh/id_rsa -q -N \"\" \n",
+					"aws s3 cp /home/ec2-user/.ssh/id_rsa.pub s3://buckettraining007/id_rsa.pub \n",
+					"curl -X PUT -H 'Content-Type:' --data-binary '{\"Status\" : \"SUCCESS\",",
+																	"\"Reason\" : \"Configuration Complete\",",
+																	"\"UniqueId\" : \"CFT1\",",
+																	"\"Data\" : \"Application has completed configuration\"}' ",
+																	"\"",{ "Ref" : "WaitHandle" },"\"\n"]]}				
+			 }
+			}
+		},
+		"WaitHandle" : {
+		"Type" : "AWS::CloudFormation::WaitConditionHandle"
+		},
+		"WaitCondition" : {
+		"Type" : "AWS::CloudFormation::WaitCondition",
+		"DependsOn":"HostInstanceSandeep",
+		"Properties" : {
+			"Handle" : { "Ref" : "WaitHandle" },
+			"Timeout" : "300"
+			}
+		},
+		"ServerInstanceSandeep":{
+			"DependsOn":"WaitCondition",
+			"Type":"AWS::EC2::Instance",
+			"Properties":{
+			 "ImageId":{"Fn::FindInMap": [
+				"RegionMap",
+				{
+					"Ref": "AWS::Region"
+				},
+				"AMI"
+			 ]},
+			 "InstanceType":"t2.micro",
+			 "KeyName": {"Ref":"KeyPair"},
+			 "Tags" : [
+                {
+                "Key" : "Name",
+                "Value" : "ServerInstanceSandeep"
+                },
+                {
+                "Key" : "username",
+                "Value" : "sandeeprajan.p"
+                },
+                {
+                "Key" : "Email",
+                "Value" : "sandeeprajan.p@quantiphi.com"
+                },
+                {
+                "Key" : "Project",
+                "Value" : "PE_Training"
+                }
+			 ],
+			 "IamInstanceProfile" : "PE_trainee_Admin_role",
+			 "SecurityGroupIds" : ["sg-7d965f36"],
+			 "UserData":{"Fn::Base64" : { "Fn::Join" : ["",[
+					"#!/bin/bash -xe \n",
+					"yum update -y \n",
+					"aws s3 cp s3://buckettraining007/id_rsa.pub /home/ec2-user/.ssh/ \n",
+					"chmod 700 /home/ec2-user/.ssh \n",
+					"chmod 600 /home/ec2-user/.ssh/id_rsa.pub \n",
+					"chmod 600 /home/ec2-user/.ssh/authorized_keys \n",	
+					"cat /home/ec2-user/.ssh/id_rsa.pub >> /home/ec2-user/.ssh/authorized_keys \n"]]}
+			 }
+			}	
+		}
+	},
+	"Outputs":{
+		"InstanceIdHost":{
+			"Description":"The InstanceId of the newly created host instances",
+			"Value":{
+				"Ref":"HostInstanceSandeep"
+			}			
+		},
+		"InstanceIdServer":{
+			"Description":"The InstanceId of the newly created server instances",
+			"Value":{
+				"Ref":"ServerInstanceSandeep"
+			}	
+		}
+	},
+	"AWSTemplateFormatVersion":"2010-09-09"
+}
+ 
