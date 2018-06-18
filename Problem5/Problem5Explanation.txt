@@ -1,0 +1,10 @@
+The python code to be used for various methods have been attached in the Problem 5 Directory 
+
+The POST and PUT Method are similar as I have doubts regarding the usage of POST and PUT Method.
+All I know for sure is PUT is idempotent, so if you PUT an object twice, it has no effect. While POST is different and can lead to overwriting when two request come.
+
+API Gateway has been made with two resources one for HR and one for employees other than HR
+
+User Pool was created using Cognito and the Adminstrator has the power to add or remove users.Groups have been created and role has been assigned  
+
+API Gateway resources has to be conected with the authenticated user pool. Tried doing it. Will have to do it again
